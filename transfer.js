@@ -99,10 +99,34 @@ const Chaincode = class {
         return amtBytes;
     }
 
+    async inquire2(stub, args) {
+        if (args.length != 1) {
+            throw new Error('Incorrect number of arguments. Expectiong 1')
+        }
+
+        let jsonResp = {};
+        let userA = args[0];
+
+        let amtBytes = await stub.getState(userA);
+        if (!amtBytes) {
+            jsonResp.error = 'Failed to get state for '+userA;
+            throw new Error(JSON.stringify(jsonResp));
+        }
+
+        jsonResp.name = userA;
+        jsonResp.amount = amtBytes.toString();
+
+        console.info('Query Response:');
+        console.info(jsonResp);
+
+        return amtBytes;
+    }
+
+    /*
     async search(stub, args) {
         //   0
         // 'queryString'
-
+        console.info('inquire2 Query Response:');
         if (args.length < 1) {
           throw new Error('Incorrect number of arguments. Expecting queryString');
         }
@@ -115,7 +139,7 @@ const Chaincode = class {
         let queryResults = await method(stub, queryString, thisClass);
         return queryResults;
       }
-
+    
     // =========================================================================================
     // executeQuery executes the passed in query string.
     // Result set is built and returned as a byte array containing the JSON results.
@@ -168,6 +192,7 @@ const Chaincode = class {
           }
         }
     }
+    */
 }
 
 shim.start(new Chaincode());
