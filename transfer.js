@@ -20,7 +20,7 @@ const Chaincode = class {
         }
 
         try {
-            let payload = await method(stub, ret.params)
+            let payload = await method(stub, ret.params);
             return shim.success(payload);
         } catch (err) {
             console.log(err);
@@ -30,21 +30,21 @@ const Chaincode = class {
 
     async openAccount(stub, args) {
         if (args.length !== 2) {
-            throw new Error('Incorrect number of arguments. Expectiong 2')
+            throw new Error('Incorrect number of arguments. Expectiong 2');
         }
 
         let userA = args[0];
 
         if (!userA) {
-            throw new Error('asset holding must not be empty')
+            throw new Error('asset holding must not be empty');
         }
 
-        await stub.putState(userA, Buffer.from(args[1]))
+        await stub.putState(userA, Buffer.from(args[1]));
     }
 
     async transfer(stub, args) {
         if (args.length !== 3) {
-            throw new Error('Incorrect number of arguments. Expectiong')
+            throw new Error('Incorrect number of arguments. Expectiong');
         }
 
         let userA = args[0];
@@ -97,6 +97,76 @@ const Chaincode = class {
         console.info(jsonResp);
 
         return amtBytes;
+    }
+
+    async search(stub, args) {
+        //   0
+        // 'queryString'
+
+        if (args.length < 1) {
+          throw new Error('Incorrect number of arguments. Expecting queryString');
+        }
+        let thisClass = this;
+        let queryString = args[0];
+        if (!queryString) {
+          throw new Error('queryString must not be empty');
+        }
+        let method = thisClass['executeQuery'];
+        let queryResults = await method(stub, queryString, thisClass);
+        return queryResults;
+      }
+
+    // =========================================================================================
+    // executeQuery executes the passed in query string.
+    // Result set is built and returned as a byte array containing the JSON results.
+    // =========================================================================================
+    async executeQuery(stub, queryString, thisClass) {
+        console.info('- getQueryResultForQueryString queryString:\n' + queryString)
+        let resultIterator = await stub.getQueryResult(queryString);
+        let method = thisClass['convert'];
+
+        let results = await method(resultIterator, false);
+    
+        return Buffer.from(JSON.stringify(results));
+    }
+
+    async convert(iterator, isHistory) {
+        let allResults = [];
+        while (true) {
+          let res = await iterator.next();
+    
+          if (res.value && res.value.value.toString()) {
+            let jsonRes = {};
+            console.log(res.value.value.toString('utf8'));
+    
+            if (isHistory && isHistory === true) {
+              jsonRes.TxId = res.value.tx_id;
+              jsonRes.Timestamp = res.value.timestamp;
+              jsonRes.IsDelete = res.value.is_delete.toString();
+              try {
+                jsonRes.Value = JSON.parse(res.value.value.toString('utf8'));
+              } catch (err) {
+                console.log(err);
+                jsonRes.Value = res.value.value.toString('utf8');
+              }
+            } else {
+              jsonRes.Key = res.value.key;
+              try {
+                jsonRes.Record = JSON.parse(res.value.value.toString('utf8'));
+              } catch (err) {
+                console.log(err);
+                jsonRes.Record = res.value.value.toString('utf8');
+              }
+            }
+            allResults.push(jsonRes);
+          }
+          if (res.done) {
+            console.log('end of data');
+            await iterator.close();
+            console.info(allResults);
+            return allResults;
+          }
+        }
     }
 }
 

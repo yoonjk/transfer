@@ -1,6 +1,6 @@
 {
-  "name": "transfer",
-  "version": "1.0.0",
+  "name": "transferdemo",
+  "version": "0.03",
   "description": "",
   "main": "transfer.js",
   "scripts": {
