@@ -13,14 +13,14 @@ const Chaincode = class {
         console.log('getFuncAndParams:', ret);
 
         let method = this[ret.fcn];
-
+        let thisClass = this;
         if (!method) {
             console.log('no method of name:' + ret.fcn + ' found');
             return shim.success();
         }
 
         try {
-            let payload = await method(stub, ret.params);
+            let payload = await method(stub, ret.params, thisClass);
             return shim.success(payload);
         } catch (err) {
             console.log(err);
@@ -76,30 +76,7 @@ const Chaincode = class {
         }
     }
 
-    async inq(stub, args) {
-        if (args.length != 1) {
-            throw new Error('Incorrect number of arguments. Expectiong 1')
-        }
-
-        let jsonResp = {};
-        let userA = args[0];
-
-        let amtBytes = await stub.getState(userA);
-        if (!amtBytes) {
-            jsonResp.error = 'Failed to get state for '+userA;
-            throw new Error(JSON.stringify(jsonResp));
-        }
-
-        jsonResp.name = userA;
-        jsonResp.amount = amtBytes.toString();
-
-        console.info('Query Response:');
-        console.info(jsonResp);
-
-        return amtBytes;
-    }    
-
-    async inquire2(stub, args) {
+    async inquire(stub, args) {
         if (args.length != 1) {
             throw new Error('Incorrect number of arguments. Expectiong 1')
         }
@@ -122,17 +99,14 @@ const Chaincode = class {
         return amtBytes;
     }
 
- 
-
-    /*
-    async search(stub, args) {
+    async search(stub, args, thisClass) {
         //   0
         // 'queryString'
         console.info('inquire2 Query Response:');
         if (args.length < 1) {
           throw new Error('Incorrect number of arguments. Expecting queryString');
         }
-        let thisClass = this;
+
         let queryString = args[0];
         if (!queryString) {
           throw new Error('queryString must not be empty');
@@ -194,7 +168,6 @@ const Chaincode = class {
           }
         }
     }
-    */
 }
 
 shim.start(new Chaincode());
