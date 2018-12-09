@@ -168,6 +168,20 @@ const Chaincode = class {
           }
         }
     }
+
+    async getHistoryForTransfer(stub, args, thisClass) {
+        if (args.length < 1) {
+            throw new Error('Incorrect number of arguments. Expecting 1')
+        }
+
+        let userName = args[0];
+        console.info('- start getHistoryForTransfer: %s\n', userName);
+        let resultsIterator = await stub.getHistoryForKey(userName);
+        let method = thisClass['convert']
+        let results = await method(resultsIterator, true);
+
+        return Buffer.from(JSON.stringify(results));
+    }
 }
 
 shim.start(new Chaincode());
