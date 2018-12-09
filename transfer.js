@@ -40,6 +40,11 @@ const Chaincode = class {
         }
 
         await stub.putState(userA, Buffer.from(args[1]));
+
+        let err = await stub.setEvent("evtsender", Buffer.from(args[1]));
+
+        if (err)
+            throw new Error('asset holding must not be empty');
     }
 
     async transfer(stub, args) {
@@ -70,6 +75,17 @@ const Chaincode = class {
 
             await stub.putState(userA, Buffer.from(amtA.toString()));
             await stub.putState(userB, Buffer.from(amtB.toString()));
+
+            let jsonRes = {
+
+                payload: {
+                    user: userA,
+                    amt: amtA.toString()
+            }}
+            let err = await stub.setEvent("transfer", Buffer.from(JSON.stringify(jsonRes)));
+
+            if (err)
+                throw new Error('asset holding must not be empty');
         } catch (err) {
             console.log(err);
             return shim.error(err);
