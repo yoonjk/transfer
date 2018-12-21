@@ -82,7 +82,7 @@ const Chaincode = class {
                     user: userA,
                     amt: amtA.toString()
             }}
-            let err = await stub.setEvent("transfer", Buffer.from(JSON.stringify(jsonRes)));
+            let err = await stub.setEvent("evtsender", Buffer.from(JSON.stringify(jsonRes)));
 
             if (err)
                 throw new Error('asset holding must not be empty');
@@ -113,6 +113,18 @@ const Chaincode = class {
         console.info(jsonResp);
 
         return amtBytes;
+    }
+
+    // Deletes an entity from state
+    async delete(stub, args, thisClass) {
+      if (args.length != 1) {
+        throw new Error('Incorrect number of arguments. Expecting 1');
+      }
+
+      let user = args[0];
+
+      // Delete the key from the state in ledger
+      await stub.deleteState(user);
     }
 
     async search(stub, args, thisClass) {
